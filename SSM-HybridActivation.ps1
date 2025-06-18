@@ -57,7 +57,12 @@ New-Item -ItemType directory -Path $dir -Force
 Set-Location $dir
 
 Write-Host "Downloading SSM Agent installer..."
-(New-Object System.Net.WebClient).DownloadFile("https://amazon-ssm-eu-west-1.s3.eu-west-1.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe", $dir + "\AmazonSSMAgentSetup.exe")
+# Import BitsTransfer module if not already loaded
+if (-not (Get-Module -Name BitsTransfer)) {
+    Import-Module BitsTransfer
+}
+# Use BITS to download the file (faster and supports resume)
+Start-BitsTransfer -Source "https://amazon-ssm-$Region.s3.$Region.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe" -Destination "$dir\AmazonSSMAgentSetup.exe" -DisplayName "SSM Agent Download" -Priority High
 
 Write-Host "Installing SSM Agent..."
 Start-Process .\AmazonSSMAgentSetup.exe -ArgumentList @("/q", "/log", "install.log", "CODE=$code", "ID=$id", "REGION=$Region") -Wait
